@@ -1,6 +1,6 @@
 import logging
 
-from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
+from playwright.async_api import async_playwright
 
 from src.exceptions import PageRenderError
 
@@ -13,7 +13,7 @@ _USER_AGENT = (
 )
 
 
-async def render_page(url: str) -> dict:
+async def render_page(url: str) -> dict[str, str]:
     """
     Render a forum URL using Playwright and return the full HTML.
 
