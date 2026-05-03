@@ -1,6 +1,6 @@
 import logging
 
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
 
 from src.exceptions import PageRenderError
 
@@ -11,6 +11,8 @@ _USER_AGENT = (
     "AppleWebKit/537.36 (KHTML, like Gecko) "
     "Chrome/120.0.0.0 Safari/537.36"
 )
+
+_NAVIGATION_TIMEOUT_MS = 30_000
 
 
 async def render_page(url: str) -> dict[str, str]:
@@ -34,7 +36,17 @@ async def render_page(url: str) -> dict[str, str]:
         )
         try:
             page = await context.new_page()
-            response = await page.goto(url, wait_until="networkidle", timeout=30000)
+
+            try:
+                response = await page.goto(url, wait_until="networkidle", timeout=_NAVIGATION_TIMEOUT_MS)
+            except PlaywrightTimeoutError:
+                logger.warning(
+                    "[Renderer] networkidle timed out for %s, retrying with domcontentloaded", url
+                )
+                try:
+                    response = await page.goto(url, wait_until="domcontentloaded", timeout=_NAVIGATION_TIMEOUT_MS)
+                except PlaywrightTimeoutError as exc:
+                    raise PageRenderError(f"Navigation timeout for {url}") from exc
 
             if response is None or response.status >= 400:
                 status = response.status if response else "no response"
