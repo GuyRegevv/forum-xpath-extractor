@@ -126,3 +126,25 @@ async def test_context_and_browser_closed_on_double_timeout(playwright_mock_fact
 
     mock_context.close.assert_awaited_once()
     mock_browser.close.assert_awaited_once()
+
+
+@pytest.mark.integration
+async def test_render_altenens_returns_large_html():
+    result = await render_page("https://altenens.is/whats-new/posts/")
+    html = result["html"]
+    size_kb = len(html) / 1024
+    print(f"\n[altenens.is] HTML size: {size_kb:.1f} KB")
+    print(f"[altenens.is] Final URL: {result['final_url']}")
+    assert size_kb > 50, f"Expected >50 KB of rendered HTML, got {size_kb:.1f} KB"
+    assert "<html" in html.lower()
+
+
+@pytest.mark.integration
+async def test_render_blackbiz_returns_large_html():
+    result = await render_page("https://s1.blackbiz.store/whats-new")
+    html = result["html"]
+    size_kb = len(html) / 1024
+    print(f"\n[blackbiz.store] HTML size: {size_kb:.1f} KB")
+    print(f"[blackbiz.store] Final URL: {result['final_url']}")
+    assert size_kb > 50, f"Expected >50 KB of rendered HTML, got {size_kb:.1f} KB"
+    assert "<html" in html.lower()
