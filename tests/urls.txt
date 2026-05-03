@@ -1,0 +1,6 @@
+# Target Forum URLs
+# Both URLs must produce correct output for the project to be complete.
+# Both run XenForo. Both are publicly accessible — no CAPTCHA or bot protection.
+
+https://altenens.is/whats-new/posts/
+https://s1.blackbiz.store/whats-new

@@ -5,3 +5,5 @@ __pycache__/
 .playwright/
 .DS_Store
 .venv/
+*.pyo
+.pytest_cache/
