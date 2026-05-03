@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, patch
-from playwright.async_api import TimeoutError as PlaywrightTimeoutError
+from playwright.async_api import Error as PlaywrightError, TimeoutError as PlaywrightTimeoutError
 from src.stages.renderer import render_page
 from src.exceptions import PageRenderError
 
@@ -112,6 +112,25 @@ async def test_context_and_browser_closed_on_error(playwright_mock_factory):
 
     mock_context.close.assert_awaited_once()
     mock_browser.close.assert_awaited_once()
+
+
+async def test_network_error_raises_page_render_error(playwright_mock_factory):
+    mock_acm, mock_page, _ = playwright_mock_factory()
+    mock_page.goto = AsyncMock(side_effect=PlaywrightError("net::ERR_NAME_NOT_RESOLVED"))
+
+    with patch("src.stages.renderer.async_playwright", return_value=mock_acm):
+        with pytest.raises(PageRenderError) as exc_info:
+            await render_page("https://unreachable.example.com/")
+    assert "https://unreachable.example.com/" in str(exc_info.value)
+
+
+async def test_none_response_raises_page_render_error(playwright_mock_factory):
+    mock_acm, mock_page, _ = playwright_mock_factory()
+    mock_page.goto = AsyncMock(return_value=None)
+
+    with patch("src.stages.renderer.async_playwright", return_value=mock_acm):
+        with pytest.raises(PageRenderError):
+            await render_page("https://example.com/")
 
 
 async def test_context_and_browser_closed_on_double_timeout(playwright_mock_factory):

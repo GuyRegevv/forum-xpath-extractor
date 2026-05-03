@@ -1,6 +1,6 @@
 import logging
 
-from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
+from playwright.async_api import async_playwright, Error as PlaywrightError, TimeoutError as PlaywrightTimeoutError
 
 from src.exceptions import PageRenderError
 
@@ -47,6 +47,8 @@ async def render_page(url: str) -> dict[str, str]:
                     response = await page.goto(url, wait_until="domcontentloaded", timeout=_NAVIGATION_TIMEOUT_MS)
                 except PlaywrightTimeoutError as exc:
                     raise PageRenderError(f"Navigation timeout for {url}") from exc
+            except PlaywrightError as exc:
+                raise PageRenderError(f"Network error for {url}: {exc}") from exc
 
             if response is None or response.status >= 400:
                 status = response.status if response else "no response"
