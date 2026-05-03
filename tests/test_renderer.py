@@ -2,6 +2,7 @@ import pytest
 from unittest.mock import AsyncMock, patch
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 from src.stages.renderer import render_page
+from src.exceptions import PageRenderError
 
 
 async def test_render_page_returns_html_and_final_url(playwright_mock_factory):
@@ -45,9 +46,6 @@ async def test_render_page_sets_realistic_user_agent(playwright_mock_factory):
     ctx_kwargs = mock_browser.new_context.call_args.kwargs
     assert "Mozilla" in ctx_kwargs["user_agent"]
     assert "Chrome" in ctx_kwargs["user_agent"]
-
-
-from src.exceptions import PageRenderError
 
 
 async def test_non_2xx_status_raises_with_code_and_url(playwright_mock_factory):
@@ -107,6 +105,20 @@ async def test_context_and_browser_closed_on_error(playwright_mock_factory):
     mock_acm, _, _ = playwright_mock_factory(status=500)
     mock_browser = mock_acm.__aenter__.return_value.chromium.launch.return_value
     mock_context = mock_browser.new_context.return_value
+
+    with patch("src.stages.renderer.async_playwright", return_value=mock_acm):
+        with pytest.raises(PageRenderError):
+            await render_page("https://example.com/")
+
+    mock_context.close.assert_awaited_once()
+    mock_browser.close.assert_awaited_once()
+
+
+async def test_context_and_browser_closed_on_double_timeout(playwright_mock_factory):
+    mock_acm, mock_page, _ = playwright_mock_factory()
+    mock_browser = mock_acm.__aenter__.return_value.chromium.launch.return_value
+    mock_context = mock_browser.new_context.return_value
+    mock_page.goto = AsyncMock(side_effect=PlaywrightTimeoutError("timeout"))
 
     with patch("src.stages.renderer.async_playwright", return_value=mock_acm):
         with pytest.raises(PageRenderError):
