@@ -89,3 +89,48 @@ def test_strips_all_attributes_from_any_tag():
     assert "data-val=" not in result
     assert "aria-label=" not in result
     assert "Text" in result
+
+
+def test_removes_empty_span():
+    html = "<html><body><span></span><p>Content</p></body></html>"
+    result = sanitize_html(html)
+    assert "<span" not in result
+    assert "Content" in result
+
+
+def test_removes_whitespace_only_span():
+    html = "<html><body><span>   \n  </span><p>Content</p></body></html>"
+    result = sanitize_html(html)
+    assert "<span" not in result
+    assert "Content" in result
+
+
+def test_keeps_span_with_text():
+    html = "<html><body><span>Username</span></body></html>"
+    result = sanitize_html(html)
+    assert "<span" in result
+    assert "Username" in result
+
+
+def test_keeps_structural_container_even_if_empty_after_stripping():
+    # div is a structural container — never removed for being empty
+    html = "<html><body><div><p>Text</p></div></body></html>"
+    result = sanitize_html(html)
+    assert "<div" in result
+    assert "Text" in result
+
+
+def test_cascading_empty_removal():
+    # em has no text → removed; then span has no text and no children → removed
+    html = "<html><body><span><em></em></span><p>Real</p></body></html>"
+    result = sanitize_html(html)
+    assert "<em" not in result
+    assert "<span" not in result
+    assert "Real" in result
+
+
+def test_preserves_tail_text_when_removing_empty_node():
+    # "after" is the tail of <span> — must survive span's removal
+    html = "<html><body><p><span></span>after</p></body></html>"
+    result = sanitize_html(html)
+    assert "after" in result

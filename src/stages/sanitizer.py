@@ -26,6 +26,29 @@ def _get_tag(node) -> str:
     return tag if isinstance(tag, str) else ""
 
 
+def _is_invisible(node) -> bool:
+    tag = _get_tag(node)
+    if tag in STRUCTURAL_CONTAINERS:
+        return False
+    has_text = bool(node.text and node.text.strip())
+    has_children = len(node) > 0
+    return not has_text and not has_children
+
+
+def _remove_preserving_tail(node) -> None:
+    parent = node.getparent()
+    if parent is None:
+        return
+    tail = node.tail
+    if tail and tail.strip():
+        prev = node.getprevious()
+        if prev is not None:
+            prev.tail = (prev.tail or "") + tail
+        else:
+            parent.text = (parent.text or "") + tail
+    parent.remove(node)
+
+
 def sanitize_html(raw_html: str) -> str:
     """
     Strip a rendered HTML page down to structural skeleton + text content.
@@ -50,16 +73,14 @@ def sanitize_html(raw_html: str) -> str:
     # Pass 2: bottom-up — children are processed before their parents
     for node in right_stack:
         if callable(node.tag):  # comment or processing instruction
-            parent = node.getparent()
-            if parent is not None:
-                parent.remove(node)
+            _remove_preserving_tail(node)
             continue
 
         tag = _get_tag(node)
         if tag in REMOVE_TAGS:
-            parent = node.getparent()
-            if parent is not None:
-                parent.remove(node)
+            _remove_preserving_tail(node)
+        elif _is_invisible(node):
+            _remove_preserving_tail(node)
         else:
             node.attrib.clear()
 
