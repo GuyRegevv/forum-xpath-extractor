@@ -183,3 +183,31 @@ def test_logs_reduction_ratio(caplog):
     assert any("[Sanitizer]" in record.message for record in caplog.records)
     assert any("KB" in record.message for record in caplog.records)
     assert any("reduction" in record.message.lower() for record in caplog.records)
+
+
+@pytest.mark.integration
+async def test_sanitize_altenens_reduces_size():
+    from src.stages.renderer import render_page
+    rendered = await render_page("https://altenens.is/whats-new/posts/")
+    raw_html = rendered["html"]
+    result = sanitize_html(raw_html)
+    original_kb = len(raw_html) / 1024
+    result_kb = len(result) / 1024
+    reduction = 1 - (result_kb / original_kb)
+    print(f"\n[altenens.is] {original_kb:.1f} KB → {result_kb:.1f} KB ({reduction * 100:.1f}% reduction)")
+    assert reduction >= 0.70, f"Expected ≥70% reduction, got {reduction * 100:.1f}%"
+    assert result_kb > 5, "Sanitized output too small — something went wrong"
+
+
+@pytest.mark.integration
+async def test_sanitize_blackbiz_reduces_size():
+    from src.stages.renderer import render_page
+    rendered = await render_page("https://s1.blackbiz.store/whats-new")
+    raw_html = rendered["html"]
+    result = sanitize_html(raw_html)
+    original_kb = len(raw_html) / 1024
+    result_kb = len(result) / 1024
+    reduction = 1 - (result_kb / original_kb)
+    print(f"\n[blackbiz.store] {original_kb:.1f} KB → {result_kb:.1f} KB ({reduction * 100:.1f}% reduction)")
+    assert reduction >= 0.70, f"Expected ≥70% reduction, got {reduction * 100:.1f}%"
+    assert result_kb > 5, "Sanitized output too small — something went wrong"
