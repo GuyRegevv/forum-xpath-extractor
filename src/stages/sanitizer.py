@@ -19,14 +19,14 @@ STRUCTURAL_CONTAINERS = {
 }
 
 
-def _get_tag(node) -> str:
+def _get_tag(node: etree._Element) -> str:
     tag = node.tag
     if isinstance(tag, str) and "{" in tag:
         return tag.split("}", 1)[1]
     return tag if isinstance(tag, str) else ""
 
 
-def _is_invisible(node) -> bool:
+def _is_invisible(node: etree._Element) -> bool:
     tag = _get_tag(node)
     if tag in STRUCTURAL_CONTAINERS:
         return False
@@ -35,7 +35,7 @@ def _is_invisible(node) -> bool:
     return not has_text and not has_children
 
 
-def _remove_preserving_tail(node) -> None:
+def _remove_preserving_tail(node: etree._Element) -> None:
     parent = node.getparent()
     if parent is None:
         return

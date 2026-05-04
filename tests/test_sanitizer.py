@@ -137,6 +137,13 @@ def test_preserves_tail_text_when_removing_empty_node():
     assert "after" in result
 
 
+def test_raises_on_parse_failure(monkeypatch):
+    import src.stages.sanitizer as sanitizer_module
+    monkeypatch.setattr(sanitizer_module.lxml_html, "fromstring", lambda *a, **kw: (_ for _ in ()).throw(ValueError("boom")))
+    with pytest.raises(SanitizationError, match="Failed to parse HTML"):
+        sanitize_html("<html><body>ok</body></html>")
+
+
 def test_raises_on_empty_string():
     with pytest.raises(SanitizationError):
         sanitize_html("")
