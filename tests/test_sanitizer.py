@@ -57,3 +57,35 @@ def test_returns_non_empty_string():
     result = sanitize_html(html)
     assert isinstance(result, str)
     assert len(result) > 0
+
+
+def test_strips_class_attribute():
+    html = '<html><body><div class="container"><p class="text">Content</p></div></body></html>'
+    result = sanitize_html(html)
+    assert "class=" not in result
+    assert "Content" in result
+
+
+def test_strips_id_attribute():
+    html = '<html><body><div id="main"><p>Content</p></div></body></html>'
+    result = sanitize_html(html)
+    assert "id=" not in result
+    assert "Content" in result
+
+
+def test_strips_href_from_a_tags_but_keeps_a():
+    html = '<html><body><a href="https://example.com" class="link">Link text</a></body></html>'
+    result = sanitize_html(html)
+    assert "href=" not in result
+    assert "class=" not in result
+    assert "<a" in result
+    assert "Link text" in result
+
+
+def test_strips_all_attributes_from_any_tag():
+    html = '<html><body><span class="foo" data-val="bar" aria-label="baz">Text</span></body></html>'
+    result = sanitize_html(html)
+    assert "class=" not in result
+    assert "data-val=" not in result
+    assert "aria-label=" not in result
+    assert "Text" in result

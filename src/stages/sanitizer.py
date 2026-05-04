@@ -60,5 +60,7 @@ def sanitize_html(raw_html: str) -> str:
             parent = node.getparent()
             if parent is not None:
                 parent.remove(node)
+        else:
+            node.attrib.clear()
 
     return etree.tostring(tree, encoding="unicode", method="html")
