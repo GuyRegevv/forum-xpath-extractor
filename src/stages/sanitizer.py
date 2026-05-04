@@ -74,9 +74,8 @@ def sanitize_html(raw_html: str) -> str:
 
     tree = copy.deepcopy(tree)
 
-    # Pass 1: depth-first traversal → left_stack; right_stack is reversed (bottom-up)
-    left_stack = list(tree.iter())
-    right_stack = list(reversed(left_stack))
+    # Pass 1: depth-first traversal; reversed for bottom-up processing in Pass 2
+    right_stack = list(reversed(list(tree.iter())))
 
     # Pass 2: bottom-up — children are processed before their parents
     for node in right_stack:
