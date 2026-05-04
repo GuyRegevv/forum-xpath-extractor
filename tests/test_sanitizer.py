@@ -1,5 +1,6 @@
 import pytest
 from src.stages.sanitizer import sanitize_html
+from src.exceptions import SanitizationError
 
 
 def test_removes_script_tags():
@@ -134,3 +135,51 @@ def test_preserves_tail_text_when_removing_empty_node():
     html = "<html><body><p><span></span>after</p></body></html>"
     result = sanitize_html(html)
     assert "after" in result
+
+
+def test_raises_on_empty_string():
+    with pytest.raises(SanitizationError):
+        sanitize_html("")
+
+
+def test_raises_on_whitespace_only_input():
+    with pytest.raises(SanitizationError):
+        sanitize_html("   \n  ")
+
+
+def test_output_is_smaller_than_input():
+    html = (
+        "<html><body>"
+        "<script>var x = 'lots of javascript';</script>"
+        "<style>.foo { color: red; font-size: 16px; }</style>"
+        '<div class="container" id="main" data-val="something">'
+        '<p class="title">Thread title</p>'
+        "</div>"
+        "</body></html>"
+    )
+    result = sanitize_html(html)
+    assert len(result) < len(html)
+
+
+def test_deep_copy_does_not_share_state():
+    # Calling sanitize_html twice on the same input must produce identical output,
+    # proving no shared mutable state leaks between calls.
+    html = '<html><body><div class="thread"><p class="title">Title</p></div></body></html>'
+    result1 = sanitize_html(html)
+    result2 = sanitize_html(html)
+    assert result1 == result2
+
+
+def test_logs_reduction_ratio(caplog):
+    import logging
+    html = (
+        "<html><body>"
+        "<script>lots of js code here</script>"
+        '<div class="main"><p>Content</p></div>'
+        "</body></html>"
+    )
+    with caplog.at_level(logging.INFO, logger="src.stages.sanitizer"):
+        sanitize_html(html)
+    assert any("[Sanitizer]" in record.message for record in caplog.records)
+    assert any("KB" in record.message for record in caplog.records)
+    assert any("reduction" in record.message.lower() for record in caplog.records)

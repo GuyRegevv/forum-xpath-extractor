@@ -64,7 +64,15 @@ def sanitize_html(raw_html: str) -> str:
     Raises:
         SanitizationError: If the HTML cannot be parsed or the result is empty
     """
-    tree = lxml_html.fromstring(raw_html.encode("utf-8"))
+    if not raw_html or not raw_html.strip():
+        raise SanitizationError("Input HTML is empty")
+
+    try:
+        tree = lxml_html.fromstring(raw_html.encode("utf-8"))
+    except Exception as exc:
+        raise SanitizationError(f"Failed to parse HTML: {exc}") from exc
+
+    tree = copy.deepcopy(tree)
 
     # Pass 1: depth-first traversal → left_stack; right_stack is reversed (bottom-up)
     left_stack = list(tree.iter())
@@ -84,4 +92,19 @@ def sanitize_html(raw_html: str) -> str:
         else:
             node.attrib.clear()
 
-    return etree.tostring(tree, encoding="unicode", method="html")
+    result = etree.tostring(tree, encoding="unicode", method="html")
+
+    if not result or not result.strip():
+        raise SanitizationError("Sanitized HTML is empty")
+
+    original_kb = len(raw_html) / 1024
+    result_kb = len(result) / 1024
+    reduction = 1 - (result_kb / original_kb)
+    logger.info(
+        "[Sanitizer] Input: %.0f KB → Output: %.0f KB (%.1f%% reduction)",
+        original_kb,
+        result_kb,
+        reduction * 100,
+    )
+
+    return result
