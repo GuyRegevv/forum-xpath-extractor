@@ -1,17 +1,18 @@
 # Project Progress
 
 ## Status
-🟡 In progress — Stage 2 complete
+🟡 In progress — Stage 3 complete
 
 ## Completed Stages
 - ✅ Stage 1 — renderer.py (commits 5227621 → 8314294)
 - ✅ Stage 2 — sanitizer.py (commits 66386ff → e41e4fb)
+- ✅ Stage 3 — ie_extractor.py (commits 6a667fe → 9d4b373)
 
 ## Current Stage
 —
 
 ## Next Action
-Start Stage 3 — implement `ie_extractor.py`. Read `stages/03-information-extraction.md` first.
+Start Stage 4 — implement `condenser.py`. Read `stages/04-html-condenser.md` first.
 
 ---
 
@@ -19,7 +20,7 @@ Start Stage 3 — implement `ie_extractor.py`. Read `stages/03-information-extra
 
 - [x] Stage 1 — renderer.py (test: HTML length logs for both URLs)
 - [x] Stage 2 — sanitizer.py (test: reduction ratio — altenens 78.6%, blackbiz 90.8%)
-- [ ] Stage 3 — ie_extractor.py (test: extracted JSON for both URLs)
+- [x] Stage 3 — ie_extractor.py (test: extracted JSON for both URLs — both PASSED)
 - [ ] Stage 4 — condenser.py (test: condensed HTML has class names)
 - [ ] Stage 5 — xpath_generator.py (test: full loop on both URLs)
 - [ ] Stage 6 — formatter.py (test: JSON output + console display)
@@ -52,4 +53,9 @@ Session 2026-05-03: Implemented Stage 1 end-to-end using subagent-driven develop
 Session 2026-05-04: Implemented Stage 2 end-to-end using subagent-driven development.
 - 6 commits (66386ff → e41e4fb), 24 unit tests + 2 integration tests, all passing
 - Integration tests: altenens.is 117.5 KB → 25.1 KB (78.6%), blackbiz.store 142.6 KB → 13.1 KB (90.8%)
-- Resume: start Stage 3 with `ie_extractor.py` — use `/superpowers:writing-plans` then `/superpowers:subagent-driven-development`
+
+Session 2026-05-05: Implemented Stage 3 end-to-end using inline execution.
+- 5 commits (6a667fe → 9d4b373), 14 unit tests + 2 integration tests, all passing
+- Integration tests: altenens.is extracted title/author/date/link ✓, blackbiz.store ✓
+- Key decision: link.value falls back to title text when href stripped — code-level fallback added
+- Resume: start Stage 4 with `condenser.py` — use `/superpowers:writing-plans`
