@@ -87,18 +87,46 @@ async def extract_fields(sanitized_html: str) -> IEOutput:
     model = os.getenv("MODEL_NAME", "gpt-4o")
     client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-    response = await client.chat.completions.create(
-        model=model,
-        messages=messages,
-        temperature=0,
-        max_tokens=1000,
-    )
+    try:
+        response = await client.chat.completions.create(
+            model=model,
+            messages=messages,
+            temperature=0,
+            max_tokens=1000,
+        )
+    except Exception as exc:
+        raise IEExtractionError(f"LLM API call failed: {exc}") from exc
 
     content = response.choices[0].message.content
     result = _parse_and_validate(content)
 
     if result is None:
-        raise IEExtractionError("IE extraction failed: invalid JSON or schema mismatch")
+        correction_messages = messages + [
+            {"role": "assistant", "content": content},
+            {"role": "user", "content": _CORRECTION_PROMPT},
+        ]
+        try:
+            retry_response = await client.chat.completions.create(
+                model=model,
+                messages=correction_messages,
+                temperature=0,
+                max_tokens=1000,
+            )
+        except Exception as exc:
+            raise IEExtractionError(f"LLM API call failed on retry: {exc}") from exc
+
+        content = retry_response.choices[0].message.content
+        result = _parse_and_validate(content)
+
+        if result is None:
+            raise IEExtractionError(
+                "IE extraction failed after retry: invalid JSON or schema mismatch"
+            )
+
+    for field_name in ("title", "last_post_author", "last_post_date", "link"):
+        field = getattr(result, field_name)
+        if not field.value:
+            raise IEExtractionError(f"Empty value for required field: {field_name}")
 
     logger.info(
         "[IE] Extracted: title=%r author=%r date=%r link=%r",

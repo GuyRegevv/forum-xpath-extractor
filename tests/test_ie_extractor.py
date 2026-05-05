@@ -122,3 +122,60 @@ async def test_extract_fields_sends_system_message_with_skill_content():
     messages = call_kwargs["messages"]
     assert messages[0]["role"] == "system"
     assert len(messages[0]["content"]) > 500  # skill file was loaded
+
+
+# ─── Task 3: error handling + retry ─────────────────────────────────────────
+
+from src.exceptions import IEExtractionError
+
+INVALID_JSON = "Not JSON at all"
+
+INVALID_SCHEMA_JSON = json.dumps({
+    "title": {"value": "Title", "cue_text": ""},
+    "last_post_author": {"value": "user", "cue_text": ""},
+    # missing last_post_date and link
+})
+
+EMPTY_FIELD_JSON = json.dumps({
+    "title": {"value": "", "cue_text": ""},
+    "last_post_author": {"value": "user", "cue_text": ""},
+    "last_post_date": {"value": "Yesterday", "cue_text": ""},
+    "link": {"value": "/threads/1/", "cue_text": ""},
+})
+
+
+async def test_retries_once_on_invalid_json_then_succeeds():
+    mock_client = _make_mock_client(INVALID_JSON, VALID_JSON)
+    with patch("src.stages.ie_extractor.AsyncOpenAI", return_value=mock_client):
+        result = await extract_fields("<html>...</html>")
+    assert result.title.value == "How to configure XenForo permissions"
+    assert mock_client.chat.completions.create.await_count == 2
+
+
+async def test_raises_ie_extraction_error_after_two_invalid_responses():
+    mock_client = _make_mock_client(INVALID_JSON, INVALID_JSON)
+    with patch("src.stages.ie_extractor.AsyncOpenAI", return_value=mock_client):
+        with pytest.raises(IEExtractionError):
+            await extract_fields("<html>...</html>")
+
+
+async def test_retries_once_on_schema_mismatch_then_succeeds():
+    mock_client = _make_mock_client(INVALID_SCHEMA_JSON, VALID_JSON)
+    with patch("src.stages.ie_extractor.AsyncOpenAI", return_value=mock_client):
+        result = await extract_fields("<html>...</html>")
+    assert mock_client.chat.completions.create.await_count == 2
+
+
+async def test_raises_ie_extraction_error_on_empty_field_value():
+    mock_client = _make_mock_client(EMPTY_FIELD_JSON)
+    with patch("src.stages.ie_extractor.AsyncOpenAI", return_value=mock_client):
+        with pytest.raises(IEExtractionError, match="Empty value"):
+            await extract_fields("<html>...</html>")
+
+
+async def test_raises_ie_extraction_error_on_api_failure():
+    mock_client = MagicMock()
+    mock_client.chat.completions.create = AsyncMock(side_effect=Exception("API Error"))
+    with patch("src.stages.ie_extractor.AsyncOpenAI", return_value=mock_client):
+        with pytest.raises(IEExtractionError, match="LLM API call failed"):
+            await extract_fields("<html>...</html>")
