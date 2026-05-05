@@ -76,4 +76,35 @@ async def extract_fields(sanitized_html: str) -> IEOutput:
     Raises:
         IEExtractionError: If extraction fails after retry
     """
-    raise NotImplementedError
+    skill_content = _SKILL_PATH.read_text()
+    system_message = skill_content + "\n\n" + _TASK_INSTRUCTION
+
+    messages = [
+        {"role": "system", "content": system_message},
+        {"role": "user", "content": f"# Forum HTML:\n{sanitized_html}"},
+    ]
+
+    model = os.getenv("MODEL_NAME", "gpt-4o")
+    client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+    response = await client.chat.completions.create(
+        model=model,
+        messages=messages,
+        temperature=0,
+        max_tokens=1000,
+    )
+
+    content = response.choices[0].message.content
+    result = _parse_and_validate(content)
+
+    if result is None:
+        raise IEExtractionError("IE extraction failed: invalid JSON or schema mismatch")
+
+    logger.info(
+        "[IE] Extracted: title=%r author=%r date=%r link=%r",
+        result.title.value,
+        result.last_post_author.value,
+        result.last_post_date.value,
+        result.link.value,
+    )
+    return result
