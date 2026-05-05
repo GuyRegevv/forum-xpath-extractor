@@ -179,3 +179,50 @@ async def test_raises_ie_extraction_error_on_api_failure():
     with patch("src.stages.ie_extractor.AsyncOpenAI", return_value=mock_client):
         with pytest.raises(IEExtractionError, match="LLM API call failed"):
             await extract_fields("<html>...</html>")
+
+
+# ─── Task 4: integration tests ────────────────────────────────────────────────
+
+
+@pytest.mark.integration
+async def test_extract_fields_from_altenens():
+    from dotenv import load_dotenv
+    load_dotenv()
+    from src.stages.renderer import render_page
+    from src.stages.sanitizer import sanitize_html
+
+    rendered = await render_page("https://altenens.is/whats-new/posts/")
+    sanitized = sanitize_html(rendered["html"])
+    result = await extract_fields(sanitized)
+
+    print(f"\n[altenens.is] title={result.title.value!r}")
+    print(f"[altenens.is] last_post_author={result.last_post_author.value!r}  cue={result.last_post_author.cue_text!r}")
+    print(f"[altenens.is] last_post_date={result.last_post_date.value!r}")
+    print(f"[altenens.is] link={result.link.value!r}")
+
+    assert result.title.value, "title must not be empty"
+    assert result.last_post_author.value, "last_post_author must not be empty"
+    assert result.last_post_date.value, "last_post_date must not be empty"
+    assert result.link.value, "link must not be empty"
+
+
+@pytest.mark.integration
+async def test_extract_fields_from_blackbiz():
+    from dotenv import load_dotenv
+    load_dotenv()
+    from src.stages.renderer import render_page
+    from src.stages.sanitizer import sanitize_html
+
+    rendered = await render_page("https://s1.blackbiz.store/whats-new")
+    sanitized = sanitize_html(rendered["html"])
+    result = await extract_fields(sanitized)
+
+    print(f"\n[blackbiz.store] title={result.title.value!r}")
+    print(f"[blackbiz.store] last_post_author={result.last_post_author.value!r}  cue={result.last_post_author.cue_text!r}")
+    print(f"[blackbiz.store] last_post_date={result.last_post_date.value!r}")
+    print(f"[blackbiz.store] link={result.link.value!r}")
+
+    assert result.title.value
+    assert result.last_post_author.value
+    assert result.last_post_date.value
+    assert result.link.value
