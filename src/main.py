@@ -12,6 +12,7 @@ from src.stages.ie_extractor import extract_fields
 from src.stages.renderer import render_page
 from src.stages.sanitizer import sanitize_html
 from src.stages.xpath_generator import generate_xpaths
+from src.stages.reconciler import reconcile_xpaths
 from src.exceptions import ForumXPathError
 
 logging.basicConfig(
@@ -26,6 +27,7 @@ async def run_pipeline(url: str):
     ie_output = await extract_fields(sanitized)
     condensed = condense_html(rendered["html"], ie_output)
     xpaths = await generate_xpaths(condensed, ie_output, rendered["html"])
+    xpaths = await reconcile_xpaths(xpaths, rendered["html"], url)
     output = format_output(xpaths, url)
     return output
 
