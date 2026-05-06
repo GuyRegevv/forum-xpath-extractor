@@ -55,10 +55,27 @@ class IEOutput(BaseModel):
     link: FieldExtraction
 
 
+def _fix_encoding(text: str) -> str:
+    try:
+        return text.encode('latin-1').decode('utf-8')
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return text
+
+
+def _fix_ie_output_encoding(result: IEOutput) -> IEOutput:
+    return IEOutput(
+        title=FieldExtraction(value=_fix_encoding(result.title.value), cue_text=_fix_encoding(result.title.cue_text)),
+        last_post_author=FieldExtraction(value=_fix_encoding(result.last_post_author.value), cue_text=_fix_encoding(result.last_post_author.cue_text)),
+        last_post_date=FieldExtraction(value=_fix_encoding(result.last_post_date.value), cue_text=_fix_encoding(result.last_post_date.cue_text)),
+        link=FieldExtraction(value=_fix_encoding(result.link.value), cue_text=_fix_encoding(result.link.cue_text)),
+    )
+
+
 def _parse_and_validate(content: str) -> IEOutput | None:
     try:
         data = json.loads(content)
-        return IEOutput.model_validate(data)
+        result = IEOutput.model_validate(data)
+        return _fix_ie_output_encoding(result)
     except (json.JSONDecodeError, ValidationError):
         return None
 

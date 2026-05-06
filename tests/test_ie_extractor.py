@@ -181,6 +181,43 @@ async def test_raises_ie_extraction_error_on_api_failure():
             await extract_fields("<html>...</html>")
 
 
+# ─── Encoding fix ────────────────────────────────────────────────────────────
+
+from src.stages.ie_extractor import _fix_encoding
+
+
+def test_fix_encoding_repairs_cyrillic_mojibake():
+    # "Отели" encoded as UTF-8 then misread as Latin-1 produces this garbage
+    mojibake = "Отели".encode("utf-8").decode("latin-1")
+    assert _fix_encoding(mojibake) == "Отели"
+
+
+def test_fix_encoding_leaves_correct_cyrillic_unchanged():
+    assert _fix_encoding("Отели") == "Отели"
+
+
+def test_fix_encoding_leaves_ascii_unchanged():
+    assert _fix_encoding("darkuser99") == "darkuser99"
+
+
+def test_fix_encoding_leaves_empty_string_unchanged():
+    assert _fix_encoding("") == ""
+
+
+def test_parse_and_validate_repairs_mojibake_in_title():
+    from src.stages.ie_extractor import _parse_and_validate
+    mojibake_title = "Отели".encode("utf-8").decode("latin-1")
+    data = json.dumps({
+        "title": {"value": mojibake_title, "cue_text": ""},
+        "last_post_author": {"value": "user", "cue_text": ""},
+        "last_post_date": {"value": "Yesterday", "cue_text": ""},
+        "link": {"value": "/threads/1/", "cue_text": ""},
+    })
+    result = _parse_and_validate(data)
+    assert result is not None
+    assert result.title.value == "Отели"
+
+
 # ─── Task 4: integration tests ────────────────────────────────────────────────
 
 
