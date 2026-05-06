@@ -232,6 +232,7 @@ async def _generate_single(
                 messages=messages,
                 temperature=0,
                 max_tokens=500,
+                response_format={"type": "json_object"},
             )
         except Exception as exc:
             raise XPathGenerationError(f"LLM API call failed: {exc}") from exc

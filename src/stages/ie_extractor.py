@@ -95,6 +95,7 @@ async def extract_fields(sanitized_html: str) -> IEOutput:
             messages=messages,
             temperature=0,
             max_tokens=1000,
+            response_format={"type": "json_object"},
         )
     except Exception as exc:
         raise IEExtractionError(f"LLM API call failed: {exc}") from exc
@@ -113,6 +114,7 @@ async def extract_fields(sanitized_html: str) -> IEOutput:
                 messages=correction_messages,
                 temperature=0,
                 max_tokens=1000,
+                response_format={"type": "json_object"},
             )
         except Exception as exc:
             raise IEExtractionError(f"LLM API call failed on retry: {exc}") from exc
