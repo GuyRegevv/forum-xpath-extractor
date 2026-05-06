@@ -31,6 +31,7 @@ class FieldOutput(BaseModel):
     sample_value: Optional[str]
     confidence: Literal["correct", "best_effort", "failed"]
     iterations: int
+    match_count: int
 
 
 class SummaryOutput(BaseModel):
@@ -76,7 +77,7 @@ def _print_summary(output: PipelineOutput, file_path: str) -> None:
         print(f"\n {label}")
         print(f"   XPath  : {field.xpath}")
         print(f"   Sample : {sample}")
-        print(f"   {icon} {field.confidence} ({iters} iteration{'s' if iters != 1 else ''})")
+        print(f"   {icon} {field.confidence} ({iters} iteration{'s' if iters != 1 else ''}, {field.match_count} matches)")
 
     print(f"\n{sep}")
     print(f" Full JSON output saved to: {file_path}")
@@ -107,6 +108,7 @@ def format_output(xpath_results: XPathResults, url: str) -> PipelineOutput:
             sample_value=sample,
             confidence=r.confidence,
             iterations=r.iterations,
+            match_count=r.match_count,
         )
         if r.confidence == "correct":
             correct += 1

@@ -181,11 +181,11 @@ def test_validate_xpath_zero_matches():
     assert fb.match_count == 0
 
 
-def test_validate_xpath_too_many_matches():
+def test_validate_xpath_many_matches_still_validates_value():
+    # >20 matches no longer hard-rejects; value matching proceeds normally
     many_html = "<html><body>" + "<div>item</div>" * 21 + "</body></html>"
     fb = validate_xpath("//div", many_html, "item")
-    assert fb.is_correct is False
-    assert "Too broad" in fb.feedback_message
+    assert fb.is_correct is True
     assert fb.match_count == 21
 
 
@@ -243,13 +243,14 @@ def _fb(is_correct: bool, match_count: int, matched: list[str] | None = None) ->
 def test_select_best_returns_first_correct():
     attempts = [
         ("//wrong", _fb(False, 0)),
-        ("//correct", _fb(True, 1, ["Thread title"])),
-        ("//also-correct", _fb(True, 1, ["Thread title"])),
+        ("//correct", _fb(True, 15, ["Thread title"])),
+        ("//also-correct", _fb(True, 15, ["Thread title"])),
     ]
     result = _select_best(attempts, "title")
     assert result.xpath == "//correct"
     assert result.confidence == "correct"
     assert result.sample_value == "Thread title"
+    assert result.match_count == 15
 
 
 def test_select_best_best_effort_when_no_correct():
@@ -263,14 +264,16 @@ def test_select_best_best_effort_when_no_correct():
     assert result.confidence == "best_effort"
 
 
-def test_select_best_excludes_over_20_from_best_effort():
+def test_select_best_prefers_higher_match_count_for_best_effort():
+    # No longer excludes >20; picks highest match count among non-correct attempts
     attempts = [
-        ("//too-broad", _fb(False, 25)),
+        ("//broader", _fb(False, 25)),
         ("//closer", _fb(False, 3, ["wrong"] * 3)),
     ]
     result = _select_best(attempts, "title")
-    assert result.xpath == "//closer"
+    assert result.xpath == "//broader"
     assert result.confidence == "best_effort"
+    assert result.match_count == 25
 
 
 def test_select_best_failed_when_all_zero_matches():

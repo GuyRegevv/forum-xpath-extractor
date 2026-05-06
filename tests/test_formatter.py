@@ -20,6 +20,7 @@ def _make_results(
             sample_value="sample",
             confidence=confidence,
             iterations=1,
+            match_count=15,
         )
 
     return XPathResults(
@@ -113,10 +114,12 @@ def test_field_preserves_iterations(tmp_path):
         sample_value="user99",
         confidence="correct",
         iterations=3,
+        match_count=18,
     )
     with patch("src.stages.formatter._RESULTS_DIR", tmp_path):
         output = format_output(results, "https://example.com/")
     assert output.fields["last_post_author"].iterations == 3
+    assert output.fields["last_post_author"].match_count == 18
 
 
 def test_empty_sample_value_becomes_none(tmp_path):
@@ -193,6 +196,7 @@ def test_json_file_schema_correct(tmp_path):
         assert "xpath" in data["fields"][field]
         assert "confidence" in data["fields"][field]
         assert "iterations" in data["fields"][field]
+        assert "match_count" in data["fields"][field]
 
 
 def test_results_dir_created_if_missing(tmp_path):

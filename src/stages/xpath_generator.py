@@ -59,6 +59,7 @@ class FieldXPathResult(BaseModel):
     sample_value: str
     confidence: str  # "correct" | "best_effort" | "failed"
     iterations: int = 1
+    match_count: int = 0
 
 
 class XPathResults(BaseModel):
@@ -129,12 +130,7 @@ def validate_xpath(xpath: str, raw_html: str, expected_value: str) -> Validation
         )
 
     if len(matched) > 20:
-        return ValidationFeedback(
-            is_correct=False,
-            match_count=len(matched),
-            matched_values=matched[:3],
-            feedback_message=f"Too broad: XPath matched {len(matched)} elements. Narrow it down.",
-        )
+        logger.debug("[XPathGen] XPath matched %d elements — may be broad", len(matched))
 
     expected_lower = expected_value.lower().strip()
     for value in matched:
@@ -171,14 +167,14 @@ def _select_best(
     for xpath, feedback in attempts:
         if feedback.is_correct and xpath:
             sample = feedback.matched_values[0] if feedback.matched_values else ""
-            return FieldXPathResult(xpath=xpath, sample_value=sample, confidence="correct")
+            return FieldXPathResult(xpath=xpath, sample_value=sample, confidence="correct", match_count=feedback.match_count)
 
-    # 2. Highest match count between 1 and 20 (best effort)
+    # 2. Highest match count > 0 (best effort)
     best_xpath: str | None = None
     best_count = 0
     best_feedback: ValidationFeedback | None = None
     for xpath, feedback in attempts:
-        if xpath and 0 < feedback.match_count <= 20 and feedback.match_count > best_count:
+        if xpath and feedback.match_count > best_count:
             best_count = feedback.match_count
             best_xpath = xpath
             best_feedback = feedback
@@ -186,13 +182,13 @@ def _select_best(
     if best_xpath and best_feedback:
         sample = best_feedback.matched_values[0] if best_feedback.matched_values else ""
         logger.warning("[XPathGen] Field: %s — no correct XPath, using best effort", field_name)
-        return FieldXPathResult(xpath=best_xpath, sample_value=sample, confidence="best_effort")
+        return FieldXPathResult(xpath=best_xpath, sample_value=sample, confidence="best_effort", match_count=best_feedback.match_count)
 
     # 3. Last attempt with a non-None xpath (even if 0 matches)
     for xpath, _ in reversed(attempts):
         if xpath:
             logger.warning("[XPathGen] Field: %s — all attempts failed (0 matches), using last", field_name)
-            return FieldXPathResult(xpath=xpath, sample_value="", confidence="failed")
+            return FieldXPathResult(xpath=xpath, sample_value="", confidence="failed", match_count=0)
 
     # All attempts were JSON parse failures
     logger.warning("[XPathGen] Field: %s — all attempts returned invalid JSON", field_name)
