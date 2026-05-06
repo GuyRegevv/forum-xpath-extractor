@@ -1,20 +1,21 @@
 # Project Progress
 
 ## Status
-🟡 In progress — Stage 5 complete
+🟡 In progress — Stage 6 complete, end-to-end test pending blackbiz
 
 ## Completed Stages
 - ✅ Stage 1 — renderer.py (commits 5227621 → 8314294)
-- ✅ Stage 2 — sanitizer.py (commits 66386ff → e41e4fb)
-- ✅ Stage 3 — ie_extractor.py (commits 6a667fe → 9d4b373)
+- ✅ Stage 2 — sanitizer.py (commits 66386ff → e41e4fb + ccc6b60 href fix)
+- ✅ Stage 3 — ie_extractor.py (commits 6a667fe → 9d4b373 + ccc6b60)
 - ✅ Stage 4 — condenser.py (commits 4c9aacd → 619e2ab)
-- ✅ Stage 5 — xpath_generator.py (commit 178faf7)
+- ✅ Stage 5 — xpath_generator.py (commits 178faf7 + 960e170)
+- ✅ Stage 6 — formatter.py (commit 960e170)
 
 ## Current Stage
-—
+End-to-end test
 
 ## Next Action
-Start Stage 6 — implement `formatter.py`. Read `stages/06-output-formatter.md` first.
+Verify `python -m src.main https://s1.blackbiz.store/whats-new` produces correct output (altenens 4/4 already confirmed).
 
 ---
 
@@ -25,15 +26,15 @@ Start Stage 6 — implement `formatter.py`. Read `stages/06-output-formatter.md`
 - [x] Stage 3 — ie_extractor.py (test: extracted JSON for both URLs — both PASSED)
 - [x] Stage 4 — condenser.py (test: condensed HTML has class names)
 - [x] Stage 5 — xpath_generator.py (test: full loop on both URLs)
-- [ ] Stage 6 — formatter.py (test: JSON output + console display)
-- [ ] main.py — entry point wiring all stages
+- [x] Stage 6 — formatter.py (test: JSON output + console display — 26 unit tests passing)
+- [x] main.py — entry point wiring all stages
 - [ ] requirements.txt
 - [ ] .gitignore
 - [ ] README.md
 
 ## End-to-End Test
-- [ ] `python main.py https://altenens.is/whats-new/posts/` produces correct output
-- [ ] `python main.py https://s1.blackbiz.store/whats-new` produces correct output
+- [x] `python -m src.main https://altenens.is/whats-new/posts/` produces correct output (4/4 correct)
+- [ ] `python -m src.main https://s1.blackbiz.store/whats-new` — code confirmed correct (integration test 4/4), fails with 30K TPM rate limit when run immediately after altenens; run in a fresh minute window
 
 ---
 
@@ -66,6 +67,11 @@ Session 2026-05-06: Implemented Stage 5 end-to-end using inline execution.
 - Integration tests: altenens.is 3/4 correct (title/author/date), link best_effort ✓; blackbiz.store 3/4 correct, link best_effort ✓
 - Key: link field is best_effort because link.value is fallback title text from Stage 3 — validation can't confirm href match, but XPath returns valid hrefs
 - `text_content()` substring matching means ancestor-container xpaths count as correct — this is intentional per spec
+
+Session 2026-05-06 (continued): Implemented Stage 6 (formatter.py) and main.py.
+- 26 formatter unit tests passing; xhr fix committed (ccc6b60) + Stage 6 (960e170)
+- Altenens E2E: 4/4 correct, JSON saved to results/; blackbiz blocked by 30K TPM cap
+- Cyrillic mojibake fixed as side-effect of href preservation — Stage 3 now returns correct Cyrillic text
 
 Session 2026-05-05: Implemented Stage 3 end-to-end using inline execution.
 - 5 commits (6a667fe → 9d4b373), 14 unit tests + 2 integration tests, all passing
