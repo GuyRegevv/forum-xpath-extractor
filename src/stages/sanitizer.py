@@ -89,7 +89,10 @@ def sanitize_html(raw_html: str) -> str:
         elif _is_invisible(node):
             _remove_preserving_tail(node)
         else:
+            href = node.get('href', '') if _get_tag(node) == 'a' else ''
             node.attrib.clear()
+            if href:
+                node.set('href', href)
 
     result = etree.tostring(tree, encoding="unicode", method="html")
 

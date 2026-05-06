@@ -21,10 +21,9 @@ from ONE thread item that clearly shows all four fields:
 - title: the thread title
 - last_post_author: the username of the most recent poster (NOT the original poster)
 - last_post_date: the date/time of the most recent post (NOT the thread creation date)
-- link: the URL path of the thread. IMPORTANT: HTML attributes (including href) are
-  stripped in this sanitized format, so href values are NOT visible. Use this fallback
-  order: (1) any URL-like text visible in the HTML (starting with /, http, or containing
-  /threads/, /topic/, viewtopic); (2) the thread title text — never return an empty string.
+- link: the URL path of the thread. The href attribute is preserved on <a> tags in
+  this sanitized format. Extract the href value from the anchor element that contains
+  the thread title. Never return an empty string.
 
 For each field, also extract the cue_text — the nearby label text that signals
 the field's meaning. If no cue text exists, use an empty string.
@@ -126,7 +125,7 @@ async def extract_fields(sanitized_html: str) -> IEOutput:
                 "IE extraction failed after retry: invalid JSON or schema mismatch"
             )
 
-    # Belt-and-suspenders: if LLM returned empty link (href stripped), use title as locator
+    # Safety net: if LLM returned empty link despite href being visible, use title as locator
     if not result.link.value and result.title.value:
         result = result.model_copy(
             update={"link": FieldExtraction(value=result.title.value, cue_text="")}

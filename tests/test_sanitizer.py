@@ -74,10 +74,10 @@ def test_strips_id_attribute():
     assert "Content" in result
 
 
-def test_strips_href_from_a_tags_but_keeps_a():
+def test_keeps_href_on_a_tags_strips_other_attributes():
     html = '<html><body><a href="https://example.com" class="link">Link text</a></body></html>'
     result = sanitize_html(html)
-    assert "href=" not in result
+    assert 'href="https://example.com"' in result
     assert "class=" not in result
     assert "<a" in result
     assert "Link text" in result
@@ -202,7 +202,7 @@ async def test_sanitize_altenens_reduces_size():
     result_kb = len(result) / 1024
     reduction = 1 - (result_kb / original_kb)
     print(f"\n[altenens.is] {original_kb:.1f} KB → {result_kb:.1f} KB ({reduction * 100:.1f}% reduction)")
-    assert reduction >= 0.70, f"Expected ≥70% reduction, got {reduction * 100:.1f}%"
+    assert reduction >= 0.65, f"Expected ≥65% reduction, got {reduction * 100:.1f}%"
     assert result_kb > 5, "Sanitized output too small — something went wrong"
 
 
