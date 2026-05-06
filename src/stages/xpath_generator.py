@@ -58,6 +58,7 @@ class FieldXPathResult(BaseModel):
     xpath: str
     sample_value: str
     confidence: str  # "correct" | "best_effort" | "failed"
+    iterations: int = 1
 
 
 class XPathResults(BaseModel):
@@ -326,7 +327,7 @@ async def generate_xpaths(
             model=model,
             is_link=is_link,
         )
-        results[field_name] = result
+        results[field_name] = result.model_copy(update={"iterations": iterations})
         iteration_counts[field_name] = iterations
 
     logger.info("[XPathGen] Results summary:")
