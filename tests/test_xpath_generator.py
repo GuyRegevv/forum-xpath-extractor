@@ -208,6 +208,27 @@ def test_validate_xpath_empty_matched_values_not_counted_as_correct():
     assert fb.is_correct is False
 
 
+def test_validate_xpath_rejects_hardcoded_value():
+    xpath = "//a[contains(@class,'username') and contains(., 'Blackbiz Bot')]"
+    fb = validate_xpath(xpath, _SAMPLE_HTML, "Blackbiz Bot")
+    assert fb.is_correct is False
+    assert "hardcoded" in fb.feedback_message.lower()
+
+
+def test_validate_xpath_rejects_hardcoded_value_case_insensitive():
+    xpath = "//time[contains(., 'A moment ago')]"
+    fb = validate_xpath(xpath, _SAMPLE_HTML, "A moment ago")
+    assert fb.is_correct is False
+    assert "hardcoded" in fb.feedback_message.lower()
+
+
+def test_validate_xpath_allows_short_value_in_xpath():
+    # Values ≤5 chars are not checked — too likely to be a class name fragment
+    xpath = "//a[contains(@class,'bot')]"
+    fb = validate_xpath(xpath, _SAMPLE_HTML, "bot")
+    assert "hardcoded" not in fb.feedback_message.lower()
+
+
 # ─── Task 3: _select_best ────────────────────────────────────────────────────
 
 def _fb(is_correct: bool, match_count: int, matched: list[str] | None = None) -> ValidationFeedback:

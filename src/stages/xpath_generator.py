@@ -98,6 +98,18 @@ def run_xpath(xpath: str, raw_html: str) -> list[str]:
 
 def validate_xpath(xpath: str, raw_html: str, expected_value: str) -> ValidationFeedback:
     """Evaluate a generated XPath. Returns structured feedback for the LLM."""
+    if len(expected_value) > 5 and expected_value.lower() in xpath.lower():
+        return ValidationFeedback(
+            is_correct=False,
+            match_count=0,
+            matched_values=[],
+            feedback_message=(
+                f"Hardcoded value: XPath contains the literal target value '{expected_value}'. "
+                "Remove text predicates with specific values and use structural attributes "
+                "(class names, data attributes) instead."
+            ),
+        )
+
     try:
         matched = run_xpath(xpath, raw_html)
     except XPathSyntaxError as e:
