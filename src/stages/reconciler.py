@@ -155,7 +155,7 @@ async def reconcile_xpaths(
     ))
 
     model = os.getenv("MODEL_NAME", "gpt-4o")
-    client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_BASE_URL"))
 
     updated = xpath_results
 

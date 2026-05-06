@@ -7,6 +7,8 @@ from lxml import html as lxml_html
 from openai import AsyncOpenAI
 from pydantic import BaseModel, ValidationError
 
+from rapidfuzz import fuzz
+
 from src.exceptions import XPathGenerationError, XPathSyntaxError
 from src.stages.ie_extractor import IEOutput
 
@@ -145,6 +147,17 @@ def validate_xpath(xpath: str, raw_html: str, expected_value: str) -> Validation
     for value in matched:
         value_lower = value.lower()
         if value_lower and (expected_lower in value_lower or value_lower in expected_lower):
+            msg = "Correct" if len(matched) == 1 else f"Correct (found among {len(matched)} matches)"
+            return ValidationFeedback(
+                is_correct=True,
+                match_count=len(matched),
+                matched_values=matched,
+                feedback_message=msg,
+            )
+
+    for value in matched:
+        value_lower = value.lower()
+        if value_lower and fuzz.partial_ratio(expected_lower, value_lower) >= 85:
             msg = "Correct" if len(matched) == 1 else f"Correct (found among {len(matched)} matches)"
             return ValidationFeedback(
                 is_correct=True,
@@ -322,7 +335,7 @@ async def generate_xpaths(
         raise XPathGenerationError("condensed_html is empty — cannot generate XPaths")
 
     model = os.getenv("MODEL_NAME", "gpt-4o")
-    client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_BASE_URL"))
 
     field_specs = [
         ("title",            ie_output.title.value,            ie_output.title.cue_text,            False),

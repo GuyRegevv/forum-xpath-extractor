@@ -104,7 +104,7 @@ async def extract_fields(sanitized_html: str) -> IEOutput:
     ]
 
     model = os.getenv("MODEL_NAME", "gpt-4o")
-    client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_BASE_URL"))
 
     try:
         response = await client.chat.completions.create(
