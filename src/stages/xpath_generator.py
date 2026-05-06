@@ -20,16 +20,23 @@ Your task is to read the HTML provided and generate ONE XPath expression
 that reliably extracts the target value from any page with this structure.
 
 Rules:
-1. Do not hardcode the exact target value into the XPath.
+1. Never hardcode the target value — not the full string, not a fragment of it.
+   Titles, usernames, dates, and URLs are all different on every page.
 2. Use contains(@class, 'value') instead of @class='value' for class matching
    — elements often have multiple classes.
-3. Use contains(., 'value') for text predicates, never text()='value'.
+3. Never filter on text content. Do not use contains(., '...'), [.='...'], or
+   text()='...' to match dynamic values. Navigate to elements using class names,
+   tag names, data attributes, and XPath axes only.
+   Exception: you MAY use a contains(., '...') predicate on a stable structural
+   label (the cue text) to locate an anchor element — never on the target value.
 4. If a cue text exists, use it as a structural anchor — traverse from the
    cue text node to the target using XPath axes (following-sibling, parent,
    ancestor, descendant).
-5. String functions are allowed: starts-with(), contains(), normalize-space().
+5. String functions (contains, starts-with, normalize-space) are allowed on
+   attributes only — e.g. contains(@href, '/members/'). Never on text content.
 6. Prefer class-based or semantic-attribute-based paths over positional indices.
-7. The XPath must match elements on any page of this forum, not just this one.
+7. The XPath must work on any page of this forum — imagine it running on 100
+   different thread listing pages with completely different content.
 8. Always respond in this exact JSON format:
    {"thought": "...", "xpath": "..."}"""
 
