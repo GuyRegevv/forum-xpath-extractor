@@ -60,6 +60,8 @@ class FieldXPathResult(BaseModel):
     confidence: str  # "correct" | "best_effort" | "failed"
     iterations: int = 1
     match_count: int = 0
+    original_xpath: str | None = None
+    explanation: str | None = None
 
 
 class XPathResults(BaseModel):
