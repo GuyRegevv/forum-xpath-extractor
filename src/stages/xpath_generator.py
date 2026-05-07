@@ -217,6 +217,21 @@ def _select_best(
     return FieldXPathResult(xpath="", sample_value="", confidence="failed")
 
 
+# ── HTML Snippet Helper ───────────────────────────────────────────────────────
+
+def _html_snippet(html: str, target: str, context_lines: int = 4) -> str:
+    """Return lines surrounding the first occurrence of target in html."""
+    lines = html.splitlines()
+    target_lower = target.lower()
+    for i, line in enumerate(lines):
+        if target_lower in line.lower():
+            start = max(0, i - context_lines)
+            end = min(len(lines), i + context_lines + 1)
+            snippet = "\n".join(lines[start:end])
+            return f"Relevant HTML where the value appears:\n{snippet}\n"
+    return ""
+
+
 # ── Per-Field Generator ────────────────────────────────────────────────────────
 
 async def _generate_single(
@@ -297,9 +312,13 @@ async def _generate_single(
             break
 
         if iteration < MAX_ITERATIONS - 1:
+            html_hint = ""
+            if feedback.match_count == 0:
+                html_hint = _html_snippet(condensed_html, field_value)
             feedback_prompt = (
                 f"Your previous XPath was: {xpath_result.xpath}\n"
-                f"Validation result: {feedback.feedback_message}\n\n"
+                f"Validation result: {feedback.feedback_message}\n"
+                f"{html_hint}\n"
                 "Refine the XPath based on this feedback.\n"
                 "The refined XPath must address the issue described.\n"
                 'Respond in the same JSON format: {"thought": "...", "xpath": "..."}'

@@ -38,7 +38,8 @@ class ReconcilerResponse(BaseModel):
 
 
 def _to_element_xpath(xpath: str) -> str:
-    """Strip trailing /text() or /@attr so the XPath returns elements."""
+    """Strip trailing /text() or /@attr and string() wrappers so the XPath returns elements."""
+    xpath = re.sub(r'^string\((.*)\)$', r'\1', xpath.strip())
     return re.sub(r'/(text\(\)|@\w+)$', '', xpath)
 
 
