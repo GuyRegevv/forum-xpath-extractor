@@ -7,3 +7,5 @@ __pycache__/
 .venv/
 *.pyo
 .pytest_cache/
+.claude/
+docs/
