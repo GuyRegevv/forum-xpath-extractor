@@ -251,11 +251,13 @@ async def _generate_single(
         if is_link
         else ""
     )
+    snippet = _html_snippet(condensed_html, field_value)
     initial_prompt = (
         f"Target field: {field_name}\n"
         f"Target value: {field_value}\n"
         f"Cue text: {cue_text}{link_note}\n\n"
         f"HTML context:\n{condensed_html}\n\n"
+        f"{snippet}"
         "Generate the XPath for the target field."
     )
 
