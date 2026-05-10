@@ -2,6 +2,8 @@
 
 An AI-powered pipeline that takes a forum URL and automatically generates robust XPath selectors for four key fields present in any forum thread list: **title**, **last post author**, **last post date**, and **link**. It works across different forum software and layouts without any hardcoding - it uses LLMs to understand the semantic structure of each page rather than relying on fixed patterns.
 
+> **Note:** This submission was built and tested using a free-tier small model. The pipeline supports any OpenAI-compatible model and larger models will perform better — producing more accurate XPaths with fewer iterations.
+
 ---
 
 ## Architecture
