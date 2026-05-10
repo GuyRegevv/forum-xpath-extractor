@@ -92,45 +92,65 @@ Assembles the final result, computes an overall status (`success` / `partial` / 
 
 ---
 
-## Installation
+## Installation & Setup
 
+**Requirements:** Python 3.11 or higher.
+
+**1. Clone the repo**
+```bash
+git clone https://github.com/GuyRegevv/forum-xpath-extractor.git
+cd forum-xpath-extractor
+```
+
+**2. Create and activate a virtual environment**
+
+Mac/Linux:
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Windows:
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+**3. Install dependencies**
 ```bash
 pip install -r requirements.txt
+```
+
+**4. Install the browser**
+```bash
 playwright install chromium
 ```
 
----
+**5. Configure your API key**
 
-## Configuration
-
-Copy the example environment file and fill in your OpenAI API key:
-
+Create a `.env` file in the project root:
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env`:
-
+Then open `.env` and fill in your key:
 ```
 OPENAI_API_KEY=sk-...
-MODEL_NAME=gpt-4o
+OPENAI_BASE_URL=https://api.mistral.ai/v1
+MODEL_NAME=mistral-small-latest
 ```
 
-The model can be swapped (e.g. `gpt-4o-mini`, any OpenAI-compatible endpoint) without touching any source file. To use a custom API base URL (e.g. Azure, local proxy), set `OPENAI_BASE_URL` as well.
-
----
-
-## Usage
-
-```bash
-python -m src.main <url>
-```
-
-Example:
-
+**6. Run**
 ```bash
 python -m src.main https://altenens.is/whats-new/posts/
 ```
+
+Or on the second test URL:
+```bash
+python -m src.main https://s1.blackbiz.store/whats-new
+```
+
+Add `--verbose` for detailed logs of each stage.
 
 Add `--verbose` / `-v` for debug-level logging.
 
@@ -138,7 +158,7 @@ Add `--verbose` / `-v` for debug-level logging.
 
 ## Example Output
 
-Console summary printed at the end of a run:
+Console summary:
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -150,7 +170,7 @@ Console summary printed at the end of a run:
 
  TITLE
    XPath  : //div[contains(@class, 'structItem-title')]/a
-   Sample : 👸DROPS - 1081👸 YOONG TEN'S ONLYFANS💋
+   Sample : CC,CVV,VBV,NON VBV ,DUMPS ,FULLZ,BANK LOGS (FULL INFO) BEST -ALL LINKABLES
    ✓ correct (1 iteration, 20 matches)
 
  LAST POST AUTHOR
@@ -159,21 +179,21 @@ Console summary printed at the end of a run:
    ✓ correct (1 iteration, 20 matches)
 
  LAST POST DATE
-   XPath  : //div[contains(@class, 'structItem-cell--latest')]/a/time[contains(@class, 'structItem-latestDate')]
+   XPath  : //div[contains(@class, 'structItem-cell--latest')]//a/time[contains(@class, 'structItem-latestDate')]
    Sample : A moment ago
    ✓ correct (2 iterations, 20 matches)
 
  LINK
    XPath  : //div[contains(@class, 'structItem-title')]/a/@href
-   Sample : /threads/princessdrops-1081princess-yoong-tens-onlyfanskiss-mark.2937283/
+   Sample : /threads/cc-cvv-vbv-non-vbv-dumps-fullz-bank-logs-full-info-best-all-linkables-quality-product-list-always-selling-stuff-high-qualit.2937336/
    ✓ correct (1 iteration, 20 matches)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- Full JSON output saved to: results/output_altenens.is_20260510_111837.json
+ Full JSON output saved to: results/output_altenens.is_20260510_130829.json
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-JSON file saved to `results/`:
+JSON output:
 
 ```json
 {
@@ -182,7 +202,7 @@ JSON file saved to `results/`:
   "fields": {
     "title": {
       "xpath": "//div[contains(@class, 'structItem-title')]/a",
-      "sample_value": "👸DROPS - 1081👸 YOONG TEN'S ONLYFANS💋",
+      "sample_value": "CC,CVV,VBV,NON VBV ,DUMPS ,FULLZ,BANK LOGS (FULL INFO) BEST -ALL LINKABLES",
       "confidence": "correct",
       "iterations": 1,
       "match_count": 20,
@@ -199,7 +219,7 @@ JSON file saved to `results/`:
       "explanation": null
     },
     "last_post_date": {
-      "xpath": "//div[contains(@class, 'structItem-cell--latest')]/a/time[contains(@class, 'structItem-latestDate')]",
+      "xpath": "//div[contains(@class, 'structItem-cell--latest')]//a/time[contains(@class, 'structItem-latestDate')]",
       "sample_value": "A moment ago",
       "confidence": "correct",
       "iterations": 2,
@@ -209,7 +229,7 @@ JSON file saved to `results/`:
     },
     "link": {
       "xpath": "//div[contains(@class, 'structItem-title')]/a/@href",
-      "sample_value": "/threads/princessdrops-1081princess-yoong-tens-onlyfanskiss-mark.2937283/",
+      "sample_value": "/threads/cc-cvv-vbv-non-vbv-dumps-fullz-bank-logs-full-info-best-all-linkables-quality-product-list-always-selling-stuff-high-qualit.2937336/",
       "confidence": "correct",
       "iterations": 1,
       "match_count": 20,
